@@ -1,0 +1,135 @@
+﻿@model BoardMVC.Models.ViewModels.AnnouncementViewModel
+
+@if (TempData["DeleteSuccess"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["DeleteSuccess"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["DeleteError"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["DeleteError"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@{
+    ViewData["Title"] = "Announcement Details";
+}
+
+<div class="container mt-4">
+    <div class="card shadow">
+        <!-- Card Header with Title and Action Buttons -->
+        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h2 class="h4 mb-0">@Model.Title</h2>
+            <div>
+                <a asp-action="UpdateAnnouncement" method="get" asp-route-id="@Model.Id" class="btn btn-primary btn-sm me-2">
+                    Update
+                </a>
+                <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    Delete
+                </button>
+            </div>
+        </div>
+
+        <!-- Card Body with Announcement Details -->
+        <div class="card-body">
+            <div class="row mb-4">
+                <!-- Category Information Column -->
+                <div class="col-md-6 mb-3 mb-md-0">
+                    <h5 class="text-muted mb-3">Category Information</h5>
+                    <dl class="row">
+                        <dt class="col-sm-4">Category:</dt>
+                        <dd class="col-sm-8">@Model.Category</dd>
+
+                        @if (!string.IsNullOrEmpty(Model.SubCategory))
+                        {
+                            <dt class="col-sm-4">Subcategory:</dt>
+                            <dd class="col-sm-8">@Model.SubCategory</dd>
+                        }
+                    </dl>
+                </div>
+
+                <!-- Status Information Column -->
+                <div class="col-md-6">
+                    <h5 class="text-muted mb-3">Status Information</h5>
+                    <dl class="row">
+                        <dt class="col-sm-4">Status:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge @(Model.StatusValue ? "bg-primary" : "bg-warning")">
+                                @Model.StatusDisplay
+                            </span>
+                        </dd>
+                        <dt class="col-sm-4">Created:</dt>
+                        <dd class="col-sm-8">@Model.CreateDate.ToString("MMMM dd, yyyy HH:mm")</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Description Section -->
+            <div class="mb-4">
+                <h5 class="text-muted mb-3">Description</h5>
+                <div class="p-3 bg-light rounded">
+                    @if (!string.IsNullOrEmpty(Model.Description))
+                    {
+                        @Html.Raw(Model.Description.Replace(Environment.NewLine, "<br />"))
+                    }
+                    else
+                    {
+                        <span class="text-muted">No description provided</span>
+                    }
+                </div>
+            </div>
+
+            <div class="d-flex">
+                <a asp-action="Index" class="btn btn-secondary">
+                    Back to List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this announcement?</p>
+                <p class="fw-bold">"@Model.Title"</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+                <form asp-action="DeleteAnnouncement" asp-route-id="@Model.Id" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                toastr.success('@TempData["SuccessMessage"]');
+            });
+        </script>
+    }
+}

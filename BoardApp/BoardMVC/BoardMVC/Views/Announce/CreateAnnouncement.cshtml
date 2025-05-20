@@ -1,0 +1,98 @@
+﻿@model BoardMVC.Models.ViewModels.CreateAnnouncementViewModel
+
+@{
+    ViewData["Title"] = "Create Announcement";
+}
+
+<div class="container">
+    <h1>Create New Announcement</h1>
+
+    <form asp-action="CreateAnnouncement" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <!-- Title -->
+                <div class="form-group mb-3">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group mb-3">
+                    <label asp-for="Description" class="form-label"></label>
+                    <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+
+                <!-- Category Dropdown -->
+                <div class="form-group mb-3">
+                    <label asp-for="Category" class="form-label"></label>
+                    <select asp-for="Category" class="form-control" id="categorySelect">
+                        <option value="">-- Select Category --</option>
+                        @foreach (var category in Model.AvailableCategories.Keys)
+                        {
+                            <option value="@category">@category</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Category" class="text-danger"></span>
+                </div>
+
+                <!-- Subcategory Dropdown -->
+                <div class="form-group mb-3" id="subcategoryGroup"
+                     style="display: @(Model.AvailableSubCategories != null ? "block" : "none")">
+                    <label asp-for="SubCategory" class="form-label"></label>
+                    <select asp-for="SubCategory" class="form-control" id="subcategorySelect">
+                        <option value="">-- Optional Subcategory --</option>
+                        @if (Model.AvailableSubCategories != null)
+                        {
+                            foreach (var sub in Model.AvailableSubCategories)
+                            {
+                                <option value="@sub">@sub</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- Status Toggle -->
+                <div class="form-check mb-3">
+                    <input asp-for="Status" class="form-check-input" />
+                    <label asp-for="Status" class="form-check-label"></label>
+                </div>
+
+                <!-- Form Buttons -->
+                <div class="d-flex gap-2">
+                    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Create Announcement</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            const allCategories = @Html.Raw(Json.Serialize(Model.AvailableCategories));
+
+            $('#categorySelect').change(function() {
+                const selectedCategory = $(this).val();
+                const $subcategoryGroup = $('#subcategoryGroup');
+                const $subcategorySelect = $('#subcategorySelect');
+
+                $subcategorySelect.empty().append('<option value="">-- Optional Subcategory --</option>');
+
+                if (selectedCategory) {
+                    const subcategories = allCategories[selectedCategory] || [];
+                    subcategories.forEach(sub => {
+                        $subcategorySelect.append(`<option value="${sub}">${sub}</option>`);
+                    });
+                    $subcategoryGroup.show();
+                } else {
+                    $subcategoryGroup.hide();
+                }
+            }).trigger('change');
+        });
+    </script>
+}

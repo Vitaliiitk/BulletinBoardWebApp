@@ -1,0 +1,166 @@
+﻿@model BoardMVC.Models.ViewModels.AnnouncementListViewModel
+
+@if (TempData["DeleteSuccess"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["DeleteSuccess"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (TempData["DeleteError"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["DeleteError"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@{
+    ViewData["Title"] = "Announcements";
+}
+
+<div class="container">
+    <h1>Announcements</h1>
+
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="form-inline">
+                <div class="form-group mr-3">
+                    <label for="Status" class="mr-2">Status:</label>
+                    <select asp-for="Filter.Status" class="form-control">
+                        <option value="">All</option>
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+
+                <!-- Category dropdown -->
+                <div class="form-group mr-3">
+                    <label asp-for="Filter.Category" class="mr-2">Category:</label>
+                    <select asp-for="Filter.Category" class="form-control" id="categorySelect">
+                        <option value="">All Categories</option>
+                        @foreach (var category in Model.Filter.AvailableCategories.Keys)
+                        {
+                            <option value="@category" selected="@(category == Model.Filter.Category)">@category</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Subcategory dropdown (initially hidden) -->
+                <div class="form-group mr-3" id="subcategoryGroup"
+                     style="display: @(string.IsNullOrEmpty(Model.Filter.Category) ? "none" : "block")">
+                    <label asp-for="Filter.SubCategory" class="mr-2">SubCategory:</label>
+                    <select asp-for="Filter.SubCategory" class="form-control" id="subcategorySelect">
+                        <option value="">All Subcategories</option>
+                        @if (!string.IsNullOrEmpty(Model.Filter.Category) &&
+                        Model.Filter.AvailableCategories.TryGetValue(Model.Filter.Category, out var subCategories))
+                        {
+                            foreach (var sub in subCategories)
+                            {
+                                <option value="@sub" selected="@(sub == Model.Filter.SubCategory)">@sub</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary mt-2">Filter</button>
+                <a asp-controller="Announce" asp-action="CreateAnnouncement" method="get" class="btn btn-success mt-2">Create Announcement</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Announcements List -->
+    <div class="row row-cols-1 row-cols-md-3 g-4 align-items-stretch">
+        @if (Model.Announcements.Any())
+        {
+            @foreach (var announcement in Model.Announcements)
+            {
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title">@announcement.Title</h5>
+                                <h6 class="card-subtitle mb-2 text-muted">
+                                    @announcement.Category |
+                                    <span class="@(announcement.StatusValue ? "text-primary" : "text-warning")">
+                                        @announcement.StatusDisplay
+                                    </span>
+                                </h6>
+                                <p class="card-text">@announcement.ShortDescription</p>
+                            </div>
+                            <div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <p class="text-muted mb-0"><small>@announcement.CreateDate.ToString("MMMM dd, yyyy HH:mm")</small></p>
+                                    <a asp-action="AnnouncementDetails" asp-route-id="@announcement.Id"
+                                       class="btn btn-sm btn-outline-primary">
+                                        Read More
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="col-12">
+                <div class="card border-secondary h-100">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No announcements found</h4>
+                        <p class="text-muted">There are currently no announcements to display.</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            updateSubcategories();
+
+            $('#categorySelect').change(function() {
+                updateSubcategories();
+            });
+
+            function updateSubcategories() {
+                var category = $('#categorySelect').val();
+                var subcategoryGroup = $('#subcategoryGroup');
+                var subcategorySelect = $('#subcategorySelect');
+
+                if (category) {
+                    // Show subcategory dropdown
+                    subcategoryGroup.show();
+
+                    // Update options
+                    subcategorySelect.find('option:not(:first)').remove();
+
+                    var categories = @Html.Raw(Json.Serialize(Model.Filter.AvailableCategories));
+                    var subcategories = categories[category] || [];
+
+                    $.each(subcategories, function(i, subcategory) {
+                        subcategorySelect.append($('<option>', {
+                            value: subcategory,
+                            text: subcategory
+                        }));
+                    });
+
+                    // Restore selected value if exists
+                    var currentSub = '@Model.Filter.SubCategory';
+                    if (currentSub) {
+                        subcategorySelect.val(currentSub);
+                    }
+                } else {
+                    // Hide subcategory dropdown when no category selected
+                    subcategoryGroup.hide();
+                    subcategorySelect.val('');
+                }
+            }
+        });
+    </script>
+}
